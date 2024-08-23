@@ -1,0 +1,5 @@
+mvn clean test -Dbrowser=chrome -Dselenium.grid.enabled=true
+
+docker run -it -v ${PWD}/result:/home/selenium-docker/test-output -e BROWSER=firefox -e HUB_HOST=192.168.2.10 -e TEST_SUITE=flight-reservation.xml -e THREAD_COUNT=4 doansontung/selenium
+
+docker run -e BROWSER=firefox -e HUB_HOST=192.168.2.10 -e TEST_SUITE=flight-reservation.xml -e THREAD_COUNT=4 doansontung/selenium
