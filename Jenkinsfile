@@ -1,16 +1,9 @@
 pipeline {
 
-    agent none
+    agent any
 
     stages {
         stage('Build Jar') {
-            agent {
-                docker {
-                    image 'maven:3.9.3-eclipse-temurin-17-focal'
-                    args '-u root -v /tmp/m2:/root/.m2'
-                }
-            }
-
             steps {
                 sh "mvn clean package -DskipTests"
             }
@@ -18,21 +11,28 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                script {
-                    app = docker.build('doansontung/selenium')
-                }
+                sh "docker build -t=doansontung/selenium ."
             }
         }
 
         stage('Push Image') {
-            steps {
-                script {
-                    // registry url is blank for dockerhub
-                    docker.withRegistry('', 'dockerhub-creds') {
-                        app.push("latest")
-                    }
-                }
+            environment {
+                DOCKER_HUB = credentials('dockerhub-creds')
             }
+
+            steps {
+                // sh 'docker login -u ${DOCKER_HUB_USR} -p ${DOCKER_HUB_PSW}'
+                sh 'echo ${DOCKER_HUB_PSW} | docker login -u ${DOCKER_HUB_USR} --password-stdin'
+                sh "docker push doansontung/selenium:latest"
+                sh "docker tag doansontung/selenium:latest doansontung/selenium:${env.BUILD_NUMBER}"
+                sh "docker push doansontung/selenium:${env.BUILD_NUMBER}"
+            }
+        }
+    }
+
+    post {
+        always {
+            sh "docker logout"
         }
     }
 }
